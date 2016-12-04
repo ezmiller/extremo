@@ -1,5 +1,6 @@
 (ns extremo.routes
   (:require
+    [extremo.db]
     [bidi.bidi :as bidi]
     [hiccups.runtime]
     [macchiato.response :as r])
