@@ -13,14 +13,15 @@
       (.catch #(js/console.error "Something went wrong opening repo: " %))))
 
 (defn get-file-by-path [filepath]
-  (-> (open-repo)
-      (.then #(.getCommit % "d909ade91aae7970a34ba91e800493f9bac7d473"))
-      (.then #(js/Promise.all [(.getEntry % filepath) {:date (.date %)}]))
-      (.then #(js/Promise.all
-                [(.getBlob (first %))
-                 (assoc (second %) :name (.name (first %)) :sha (.sha (first %)))]))
-      (.then #(assoc (second %) :rawsize (.rawsize (first %))
-                                 :blob (.toString (first %))))))
+  (let [rv (transient {})]
+    (-> (open-repo)
+        (.then #(.getMasterCommit % "d909ade91aae7970a34ba91e800493f9bac7d473"))
+        (.then #(do (assoc! rv :date (.date %))
+                    (.getEntry % filepath)))
+        (.then #(do (assoc! rv :name (.name %) :sha (.sha %))
+                    (.getBlob %)))
+        (.then #(persistent! ( assoc! rv :rawsize (.rawsize %)
+                                         :blob (.toString %)))))))
 
 (-> (get-file-by-path "test.md")
     (.then #(js/console.log (clj->js %)))
