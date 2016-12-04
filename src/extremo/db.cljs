@@ -5,8 +5,6 @@
 
 (def repo-path "./content/notes/.git")
 
-(defn build-fild-data [file blob])
-
 (defn open-repo []
   (-> (.resolve path "./content/notes/.git")
       (nodegit.Repository.open)
