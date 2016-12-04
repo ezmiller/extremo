@@ -19,7 +19,8 @@
             [lein-cljsbuild "1.1.4"]
   [org.clojure/clojurescript "1.9.293"]]
   :npm {:dependencies [[source-map-support "0.4.6"]
-                       [ws "1.1.1"]]}
+                       [ws "1.1.1"]
+                       [nodegit "0.15.1"]]}
   :source-paths ["src" "target/classes"]
   :clean-targets ["target"]
   :target-path "target"
