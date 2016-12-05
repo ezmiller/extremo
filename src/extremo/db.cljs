@@ -25,6 +25,29 @@
     (.then #(js/console.log (clj->js %)))
     (.catch #(js/console.error %)))
 
+(defn get-file-history
+  [filepath]
+  ;; TODO: At the momment this will only fetch 50 commits into the
+  ;;       file history. It may be that the max that fileHisotryWalk
+  ;;       can fetch is 500 at a time. The sample code for this kind
+  ;;       of walk in the nodegit repo, shows some code that seems to
+  ;;       compile the code 500 commits at a time.
+  (-> (open-repo)
+      (.then (fn [repo]
+               (-> (.getMasterCommit repo)
+                   (.then #(let [commit %
+                                 walker (.createRevWalk repo)]
+                             (.push walker (.sha commit))
+                             (.sorting walker nodegit.Revwalk.SORT.Time)
+                             (.fileHistoryWalk walker filepath 50)))
+                   (.then (fn [commits]
+                            (mapv #(assoc
+                                     {}
+                                     :sha (.sha (.-commit %))
+                                     :date (.date (.-commit %))
+                                     :commit (.-commit %)) commits)))
+                   (.catch #(js/console.error %)))))))
+
 ;; (-> (open-repo)
 ;;     (.then #(.getMasterCommit %))
 ;;     (.then #(.getTree %))
