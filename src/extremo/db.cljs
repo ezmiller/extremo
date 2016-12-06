@@ -51,8 +51,7 @@
 (defn get-file-by-path [filepath]
   (let [rv (transient {})]
     (-> (open-repo)
-        (.then #(.getMasterCommit %))
-        (.then #(.getEntry % filepath))
+        (get-entry-by-path filepath)
         (.then #(build-entry-data %)))))
 
 ;; (-> (open-repo)
