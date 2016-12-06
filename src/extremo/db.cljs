@@ -10,20 +10,10 @@
       (nodegit.Repository.open)
       (.catch #(js/console.error "Something went wrong opening repo: " %))))
 
-(defn get-file-by-path [filepath]
-  (let [rv (transient {})]
-    (-> (open-repo)
-        (.then #(.getMasterCommit % "d909ade91aae7970a34ba91e800493f9bac7d473"))
-        (.then #(do (assoc! rv :date (.date %))
-                    (.getEntry % filepath)))
-        (.then #(do (assoc! rv :name (.name %) :sha (.sha %))
-                    (.getBlob %)))
-        (.then #(persistent! ( assoc! rv :rawsize (.rawsize %)
-                                         :blob (.toString %)))))))
-
-(-> (get-file-by-path "test.md")
-    (.then #(js/console.log (clj->js %)))
-    (.catch #(js/console.error %)))
+(defn get-entry-by-path [repo filepath]
+  (-> repo
+      (.then #(.getMasterCommit %))
+      (.then #(.getEntry % filepath))))
 
 (defn get-file-history
   [filepath]
@@ -44,9 +34,26 @@
                             (mapv #(assoc
                                      {}
                                      :sha (.sha (.-commit %))
-                                     :date (.date (.-commit %))
-                                     :commit (.-commit %)) commits)))
+                                     :date (.date (.-commit %))) commits)))
                    (.catch #(js/console.error %)))))))
+
+(defn build-entry-data [entry]
+  (let [rv (transient {})]
+    (assoc! rv :name (.name entry) :sha (.sha entry))
+    (-> (js/Promise.all [(.getBlob entry) (get-file-history (.path entry))])
+        (.then (fn [[blob file-history]]
+                 (persistent! (assoc! rv :rawsize (.rawsize blob)
+                                         :blob (.toString blob)
+                                         :updated_at (:date (first file-history))
+                                         :created_at (:date (last file-history))
+                                         :history file-history)))))))
+
+(defn get-file-by-path [filepath]
+  (let [rv (transient {})]
+    (-> (open-repo)
+        (.then #(.getMasterCommit %))
+        (.then #(.getEntry % filepath))
+        (.then #(build-entry-data %)))))
 
 ;; (-> (open-repo)
 ;;     (.then #(.getMasterCommit %))
@@ -55,3 +62,9 @@
 ;;              (-> (.walk tree)
 ;;                  (.on "entry" #(js/console.log (.path %)))
 ;;                  (.start)))))
+
+;; (-> (get-file-history "test.md")
+;;     (.then #(js/console.log (clj->js %))))
+
+(-> (get-file-by-path "test.md")
+    (.then #(js/console.log (clj->js %))))
