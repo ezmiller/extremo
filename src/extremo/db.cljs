@@ -62,3 +62,16 @@
 
 (-> (get-file-by-path "test.md")
     (.then #(js/console.log (clj->js %))))
+(defn get-all-files
+  "Returns a promise vector for each file in the repo."
+  []
+  (let [rv (transient [])]
+    (-> (open-repo)
+        (.then #(.getMasterCommit %))
+        (.then #(.getTree %))
+        (.then (fn [tree]
+                 (-> (.walk tree)
+                     (.on "entry" #(conj! rv (build-entry-data %)))
+                     (.start))))
+        (.then #(js/Promise.all (persistent! rv))))))
+
