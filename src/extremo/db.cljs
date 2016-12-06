@@ -60,16 +60,5 @@
         (get-entry-by-path filepath)
         (.then #(build-entry-data %)))))
 
-;; (-> (open-repo)
-;;     (.then #(.getMasterCommit %))
-;;     (.then #(.getTree %))
-;;     (.then (fn [tree]
-;;              (-> (.walk tree)
-;;                  (.on "entry" #(js/console.log (.path %)))
-;;                  (.start)))))
-
-;; (-> (get-file-history "test.md")
-;;     (.then #(js/console.log (clj->js %))))
-
 (-> (get-file-by-path "test.md")
     (.then #(js/console.log (clj->js %))))
