@@ -5,17 +5,23 @@
 
 (def repo-path "./content/notes/.git")
 
-(defn open-repo []
-  (-> (.resolve path "./content/notes/.git")
+(defn open-repo
+  "Returns a promise for the repo specified by repo-path."
+  []
+  (-> (.resolve path repo-path)
       (nodegit.Repository.open)
       (.catch #(js/console.error "Something went wrong opening repo: " %))))
 
-(defn get-entry-by-path [repo filepath]
+(defn get-entry-by-path
+  "Returns a promise for the entry specified by filepath in repo."
+  [repo filepath]
   (-> repo
       (.then #(.getMasterCommit %))
       (.then #(.getEntry % filepath))))
 
 (defn get-file-history
+  "Returns a promise for hash-map containing information data about
+   file specified by filepath."
   [filepath]
   ;; TODO: At the momment this will only fetch 50 commits into the
   ;;       file history. It may be that the max that fileHisotryWalk
