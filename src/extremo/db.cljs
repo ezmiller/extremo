@@ -60,8 +60,6 @@
         (get-entry-by-path filepath)
         (.then #(build-entry-data %)))))
 
-(-> (get-file-by-path "test.md")
-    (.then #(js/console.log (clj->js %))))
 (defn get-all-files
   "Returns a promise vector for each file in the repo."
   []
@@ -75,3 +73,8 @@
                      (.start))))
         (.then #(js/Promise.all (persistent! rv))))))
 
+;; (-> (get-all-files)
+;;     (.then #(js/console.log %)))
+
+;; (-> (get-file-by-path "test2.md")
+;;     (.then #(js/console.log (clj->js %))))

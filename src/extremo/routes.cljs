@@ -3,7 +3,8 @@
     [extremo.db]
     [bidi.bidi :as bidi]
     [hiccups.runtime]
-    [macchiato.response :as r])
+    [macchiato.response :as r]
+    [extremo.db :as db])
   (:require-macros
     [hiccups.core :refer [html]]))
 
@@ -18,6 +19,14 @@
       (r/ok)
       (res)))
 
+(defn notes [req res]
+  (let [files (db/get-all-files)]
+    (-> files
+        (.then #(js/console.log %)))
+    (-> "All good"
+        (r/ok)
+        (res))))
+
 (defn not-found [req res]
   (-> (html
         [:html
@@ -29,6 +38,7 @@
 (def routes
   ["/"
    [["" home]
+    ["notes" notes]
     [true not-found]]])
 
 (defn router [req res]
