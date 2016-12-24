@@ -19,13 +19,14 @@
       (r/ok)
       (res)))
 
+(defn process [items]
+  (clj->js (mapv #(hash-map :name (:name %)) items)))
+
 (defn notes [req res]
-  (let [files (db/get-all-files)]
-    (-> files
-        (.then #(js/console.log %)))
-    (-> "All good"
-        (r/ok)
-        (res))))
+  (let [db-request (db/get-all-files)]
+    (.then db-request #(res (r/content-type
+                              (r/ok (js/JSON.stringify (process %)))
+                              "application/json")))))
 
 (defn not-found [req res]
   (-> (html
