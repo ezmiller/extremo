@@ -1,22 +1,22 @@
 (ns extremo.routes
   (:require
-    [extremo.db]
     [bidi.bidi :as bidi]
     [hiccups.runtime]
-    [macchiato.response :as r]
+    [macchiato.util.response :as r]
     [extremo.db :as db])
   (:require-macros
     [hiccups.core :refer [html]]))
 
-(defn home [req res]
+(defn home [req res raise]
   (-> (html
         [:html
          [:body
           [:h2 "Hello World!"]
           [:p
            "Your user-agent is: "
-           (str (-> req :headers :user-agent))]]])
+           (str (get-in req [:headers "user-agent"]))]]])
       (r/ok)
+      (r/content-type "text/html")
       (res)))
 
 (defn process [items]
@@ -28,12 +28,13 @@
                               (r/ok (js/JSON.stringify (process %)))
                               "application/json")))))
 
-(defn not-found [req res]
+(defn not-found [req res raise]
   (-> (html
         [:html
          [:body
           [:h2 (:uri req) " was not found"]]])
       (r/not-found)
+      (r/content-type "text/html")
       (res)))
 
 (def routes
@@ -42,6 +43,6 @@
     ["notes" notes]
     [true not-found]]])
 
-(defn router [req res]
+(defn router [req res raise]
   (let [route (->> req :uri (bidi/match-route routes) :handler)]
-    (route req res)))
+    (route req res raise)))

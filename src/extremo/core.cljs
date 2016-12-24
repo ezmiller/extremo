@@ -1,27 +1,22 @@
 (ns extremo.core
   (:require
+    [extremo.config :refer [env]]
+    [extremo.middleware :refer [wrap-defaults]]
     [extremo.routes :refer [router]]
-    [macchiato.env :as config]
-    [macchiato.http :refer [handler]]
+    [macchiato.server :as http]
     [macchiato.session.memory :as mem]
     [mount.core :as mount :refer [defstate]]
     [taoensso.timbre :refer-macros [log trace debug info warn error fatal]]))
 
-(defstate env :start (config/env))
-
-(defstate http :start (js/require "http"))
-
 (defn app []
   (mount/start)
-  (let [host (or (:host env) "127.0.0.1")
-        port (or (some-> env :port js/parseInt) 3449)]
-    (-> @http
-        (.createServer
-          (handler
-            router
-            {:cookies {:signed? true}
-             :session {:store (mem/memory-store)}}))
-        (.listen port host #(info "extremo started on" host ":" port)))))
+  (let [host (or (:host @env) "127.0.0.1")
+        port (or (some-> @env :port js/parseInt) 3000)]
+    (http/start
+      {:handler    (wrap-defaults router)
+       :host       host
+       :port       port
+       :on-success #(info "extremo started on" host ":" port)})))
 
 (defn start-workers [os cluster]
   (dotimes [_ (-> os .cpus .-length)]
