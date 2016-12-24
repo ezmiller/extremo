@@ -24,9 +24,10 @@
 
 (defn notes [req res]
   (let [db-request (db/get-all-files)]
-    (.then db-request #(res (r/content-type
-                              (r/ok (js/JSON.stringify (process %)))
-                              "application/json")))))
+    (.then db-request #(-> (js/JSON.stringify (process %))
+                           (r/ok)
+                           (r/content-type "application/hal+json")
+                           (res)))))
 
 (defn not-found [req res raise]
   (-> (html

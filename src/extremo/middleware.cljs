@@ -3,6 +3,8 @@
     [macchiato.defaults :as defaults]))
 
 (defn wrap-defaults [handler]
-  (defaults/wrap-defaults handler defaults/site-defaults))
+  (-> handler
+      ;; can add other middlewweare here possibly.
+      (defaults/wrap-defaults defaults/site-defaults)))
 
 
