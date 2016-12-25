@@ -3,9 +3,29 @@
     [bidi.bidi :as bidi]
     [hiccups.runtime]
     [macchiato.util.response :as r]
-    [extremo.db :as db])
+    [extremo.db :as db]
+    [clojure.walk :as walk]
+    [clojure.pprint :as pp])
   (:require-macros
     [hiccups.core :refer [html]]))
+
+(defn parse-int [s]
+   (js/parseInt s 10))
+
+(defn process-notes [notes url page]
+  (def next-page (inc (if (nil? page) page 1)))
+  (->> notes
+       (mapv #(->> %
+                   (:sha)
+                   (str "/note/")
+                   (hash-map :self)
+                   (hash-map :_links)
+                   (merge %)))
+       (hash-map :notes)
+       (hash-map :_embedded)
+       (merge
+         (hash-map :_links (hash-map :self (if (= page 1) "/notes" url)
+                                     :next (str "/notes?page=" next-page))))))
 
 (defn home [req res raise]
   (-> (html
@@ -19,15 +39,19 @@
       (r/content-type "text/html")
       (res)))
 
-(defn process [items]
-  (clj->js (mapv #(hash-map :name (:name %)) items)))
-
 (defn notes [req res]
-  (let [db-request (db/get-all-files)]
-    (.then db-request #(-> (js/JSON.stringify (process %))
-                           (r/ok)
-                           (r/content-type "application/hal+json")
-                           (res)))))
+  (let [db-request (db/get-all-files)
+        url (:url req)
+        curr-page (parse-int (:page (:params req)))]
+    (js/console.log (:page (:params req)))
+    (js/console.log curr-page)
+    (.then db-request (fn [notes]
+                        (-> (process-notes notes url curr-page)
+                            (clj->js)
+                            (js/JSON.stringify)
+                            (r/ok)
+                            (r/content-type "application/hal+json")
+                            (res))))))
 
 (defn not-found [req res raise]
   (-> (html
