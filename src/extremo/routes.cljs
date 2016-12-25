@@ -43,8 +43,6 @@
   (let [db-request (db/get-all-files)
         url (:url req)
         curr-page (parse-int (:page (:params req)))]
-    (js/console.log (:page (:params req)))
-    (js/console.log curr-page)
     (.then db-request (fn [notes]
                         (-> (process-notes notes url curr-page)
                             (clj->js)
