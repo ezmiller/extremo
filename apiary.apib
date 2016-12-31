@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: http://polls.apiblueprint.org/
+HOST: http://extremo.org/
 
 # Extremo
 
@@ -39,7 +39,7 @@ This resource does not have any attributes. Instead it offers the initial API af
                     {
                         "_links": {
                             "self": '/note/559430b6bc52ab25846c528fbff56032162e2216'
-                        }
+                        },
                         "name": 'test.md',
                         "sha": '559430b6bc52ab25846c528fbff56032162e2216',
                         "rawsize": 95,
@@ -70,4 +70,41 @@ This resource does not have any attributes. Instead it offers the initial API af
                     }
                 ]
             }
+        }
+        
+## Note [/note/{sha}]
+
+A Note object has the following attributes:
+
++ name - The filename of the note.
++ sha - A hash id of the note (same as the git-generated hash id of the "blob').
++ rawsize
++ blob - The text of the note.
++ created_at - An (which format) date when the note was published.
++ updated_at - An (which format) date when the note was last updated (i.e. last git commit).
+
++ Parameters
+    + sha: 1 (required, number) - SHA ID of the Note.
+
+### View a Note Detail [GET]
+
++ Response 200 (application/hal+json)
+
+        {
+            "_links": {
+                "self": { "href": "/note/559430b6bc52ab25846c528fbff56032162e2216"
+            },
+            "name": 'test.md',
+            "sha": '559430b6bc52ab25846c528fbff56032162e2216',
+            "rawsize": 95,
+            "blob": '### This is a note\n\nIt doesn\'t have much in it yet. \nNow it has a bit more.\nAnd now even more.\n',
+            "updated_at": 2016-12-05T16:04:25.000Z,
+            "created_at": 2016-12-03T14:21:27.000Z,
+            "history": [
+              { "sha": '69c7df3ed6a50359d0c19df97b8c8ebe21dd2399',
+                "date": 2016-12-05T16:04:25.000Z },
+              { "sha": '188c1161743983a0199760385a55c6a7450dc6ba',
+                "date": 2016-12-04T17:43:45.000Z },
+              { "sha": 'd909ade91aae7970a34ba91e800493f9bac7d473',
+                "date": 2016-12-03T14:21:27.000Z } ]
         }
