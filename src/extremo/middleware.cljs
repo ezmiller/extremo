@@ -5,6 +5,6 @@
 (defn wrap-defaults [handler]
   (-> handler
       ;; can add other middlewweare here possibly.
-      (defaults/wrap-defaults defaults/site-defaults)))
+      (defaults/wrap-defaults defaults/api-defaults)))
 
 
