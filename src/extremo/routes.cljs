@@ -39,7 +39,7 @@
       (r/content-type "text/html")
       (res)))
 
-(defn notes [req res]
+(defn get-notes [req res]
   (let [db-request (db/get-all-files)
         url (:url req)
         curr-page (parse-int (:page (:params req)))]
@@ -62,10 +62,12 @@
 
 (def routes
   ["/"
-   [["" home]
-    ["notes" notes]
+   [["home" home]
+    ["api/" {"notes" {"" {:get get-notes}}}]
     [true not-found]]])
 
 (defn router [req res raise]
-  (let [route (->> req :uri (bidi/match-route routes) :handler)]
+  (let [uri (:uri req)
+        method (:request-method req)
+        route (->> (bidi/match-route routes uri :request-method method) :handler)]
     (route req res raise)))
