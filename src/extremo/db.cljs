@@ -12,6 +12,17 @@
       (nodegit.Repository.open)
       (.catch #(js/console.error "Something went wrong opening repo: " %))))
 
+(defn get-entry-by-sha
+  "Returns a promised value for the entry specified by the sha."
+  [repo sha]
+  (-> repo
+      (.then #(.getMasterCommit %))
+      (.then #(.getTree %))
+      (.then #(.entries %))
+      (.then (fn [entries]
+               (filterv #(= (.sha %) sha) entries)))
+      (.then #(if (empty? %) nil (first %)))))
+
 (defn get-entry-by-path
   "Returns a promise for the entry specified by filepath in repo."
   [repo filepath]
@@ -54,6 +65,11 @@
                                          :created_at (:date (last file-history))
                                          :history file-history)))))))
 
+(defn get-file-by-sha [sha]
+  (-> (open-repo)
+      (get-entry-by-sha sha)
+      (.then #(build-entry-data %))))
+
 (defn get-file-by-path [filepath]
   (let [rv (transient {})]
     (-> (open-repo)
@@ -76,5 +92,14 @@
 ;; (-> (get-all-files)
 ;;     (.then #(js/console.log %)))
 
-;; (-> (get-file-by-path "test2.md")
+;; (-> (get-file-by-path "test.md")
 ;;     (.then #(js/console.log (clj->js %))))
+
+;; (-> (get-file-by-sha "96a357d8e67de8d4f3992cf4255019bbcae6da08")
+;;     (.then #(js/console.log (clj->js %))))
+
+;; (-> (open-repo)
+;;     (get-entry-by-sha "96a357d8e67de8d4f3992cf4255019bbcae6da08")
+;;     (.then #(build-entry-data %))
+;;     (.then #(js/console.log (clj->js %)))
+;;     (.catch #(js/console.error %)))
