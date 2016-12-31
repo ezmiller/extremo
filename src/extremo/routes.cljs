@@ -5,27 +5,36 @@
     [macchiato.util.response :as r]
     [extremo.db :as db]
     [clojure.walk :as walk]
-    [clojure.pprint :as pp])
+    [clojure.pprint :as pp]
+    [clojure.string :as str])
   (:require-macros
     [hiccups.core :refer [html]]))
 
 (defn parse-int [s]
    (js/parseInt s 10))
 
+(defn process-note [note]
+  (->> note
+       (:sha)
+       (str "/api/note/")
+       (hash-map :self)
+       (hash-map :_links)
+       (merge note)))
+
 (defn process-notes [notes url page]
   (def next-page (inc (if (nil? page) page 1)))
   (->> notes
        (mapv #(->> %
                    (:sha)
-                   (str "/note/")
+                   (str "/api/note/")
                    (hash-map :self)
                    (hash-map :_links)
                    (merge %)))
        (hash-map :notes)
        (hash-map :_embedded)
        (merge
-         (hash-map :_links (hash-map :self (if (= page 1) "/notes" url)
-                                     :next (str "/notes?page=" next-page))))))
+         (hash-map :_links (hash-map :self (if (= page 1) "/api/notes" url)
+                                     :next (str "/api/notes?page=" next-page))))))
 
 (defn home [req res raise]
   (-> (html
@@ -38,6 +47,18 @@
       (r/ok)
       (r/content-type "text/html")
       (res)))
+
+(defn get-note [req res raise]
+  (let [uri (:uri req)
+        note-sha (nth (str/split uri #"/") 3)
+        db-request (db/get-file-by-sha note-sha)]
+    (.then db-request (fn [note]
+      (-> (process-note note)
+          (clj->js)
+          (js/JSON.stringify)
+          (r/ok)
+          (r/content-type "application/hal+json")
+          (res))))))
 
 (defn get-notes [req res]
   (let [db-request (db/get-all-files)
@@ -63,8 +84,14 @@
 (def routes
   ["/"
    [["home" home]
-    ["api/" {"notes" {"" {:get get-notes}}}]
+    ["api/" {"note/"  {[:sha ""] {:get get-note}}
+             "notes" {"" {:get get-notes}}}]
     [true not-found]]])
+
+;; (def routes
+;;   ["/" {"home" home
+;;         "notes" {"" {:get get-notes}}
+;;         "note/" {[:sha ""] {:get get-note}}}])
 
 (defn router [req res raise]
   (let [uri (:uri req)
