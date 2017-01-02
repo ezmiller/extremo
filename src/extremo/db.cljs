@@ -76,18 +76,24 @@
         (get-entry-by-path filepath)
         (.then #(build-entry-data %)))))
 
+(defn walk-tree [tree]
+  (js/Promise. (fn [resolve reject]
+    (-> (.walk tree)
+       (.on "end" #(resolve %))
+       (.on "error" #(reject %))
+       (.start)))))
+
 (defn get-all-files
   "Returns a promise vector for each file in the repo."
   []
-  (let [rv (transient [])]
-    (-> (open-repo)
-        (.then #(.getMasterCommit %))
-        (.then #(.getTree %))
-        (.then (fn [tree]
-                 (-> (.walk tree)
-                     (.on "entry" #(conj! rv (build-entry-data %)))
-                     (.start))))
-        (.then #(js/Promise.all (persistent! rv))))))
+  (-> (open-repo)
+      (.then #(.getMasterCommit %))
+      (.then #(.getTree %))
+      (.then #(walk-tree %))
+      (.then (fn [all-entries]
+               (mapv #(build-entry-data %) all-entries)))
+      (.then #(js/Promise.all %))
+      (.catch #(js/console.error %))))
 
 ;; (-> (get-all-files)
 ;;     (.then #(js/console.log %)))
